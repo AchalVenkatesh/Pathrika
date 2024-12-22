@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Phrase Entry</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .warning {
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        input[type="submit"]:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Enter Your Key Phrase</h1>
+    <form id="keyPhraseForm">
+        <label for="keyPhrase">Please enter a phrase that will be used as a key:</label>
+        <input type="text" id="keyPhrase" name="keyPhrase" required>
+        
+        <div class="warning">
+            <p><strong>Warning:</strong> Remember this phrase! There is no way to recover it later, and it is necessary for several functions to work.</p>
+        </div>
+
+        <input type="submit" value="Submit">
+    </form>
+</div>
+
+<script>
+    document.getElementById('keyPhraseForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const keyPhrase = document.getElementById('keyPhrase').value;
+        // Here you can handle the key phrase (e.g., store it, use it for further functions)
+        // document.getElementById('runCommand').addEventListener('click', () => {
+            const command = 'ipfs-swarm-key-gen > ~/.ipfs/swarm.key'; // Change this to whatever command you want to run
+            window.api.executeCommand(command);
+        
+
+        window.api.onCommandResult((result) => {
+            const outputElement = document.getElementById('output');
+            if (result.success) {
+                var swarm_key = result.output
+                console.log(swarm_key)
+                const encrypted_swarmKey = CryptoJS.AES.encrypt(swarm_key, keyPhrase).toString();
+                const resp = fetch(`http://localhost:8001/key-gen`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body : JSON.stringify({keyPhrase , encrypted_swarmKey})    
+             });
+                if (resp.ok){
+                    alert('Key phrase submitted successfully!');
+                }
+                else{
+                    alert("Error: ",resp)
+                }
+            } else {
+                // outputElement.textContent = 'Error:\n' + result.message;
+                alert("Error: ",result.message)
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

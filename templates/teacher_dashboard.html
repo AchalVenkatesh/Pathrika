@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/kubo-rpc-client/dist/index.min.js"></script>
+    <script>
+        // Initialize the IPFS client using the global IpfsHttpClient
+        const client = window.KuboRpcClient.create({ host: 'localhost', port: 5001, protocol: 'http' });
+
+        // Function to handle file upload
+        async function uploadFile(button) {
+            const requestItem = button.closest('.request-item');
+            const fileInput = requestItem.querySelector('#pdfFile');
+            const file = fileInput.files[0];
+            const username = requestItem.getAttribute('data-username');
+            const requestId = requestItem.getAttribute('data-request-id');
+
+            if (!file) {
+                alert('Please select a file to upload');
+                return;
+            }
+
+            try {
+                const { cid } = await client.add(file);
+                console.log("File has been uploaded to the local IPFS node. Sending info to backend. Here is the cid:");
+                console.log(`${cid}`);
+                fetch("http://localhost:8001/upload", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        hash: `${cid}`,
+                        username: username,
+                        request_id: requestId
+                    })
+                })
+                .then(data => {
+                    document.getElementById('output').innerText = `File uploaded successfully!!`;
+                    console.log("File has been added to blockchain securely");
+                })
+                .catch(error => {
+                    document.getElementById('output').innerText = `File upload failed. Please check your network connection and try again!!`;
+                    console.log('Fetch error:', error);
+                });
+
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                document.getElementById('output').innerText = 'Error uploading file';
+            }
+        }
+
+        // Function to add a string
+        async function addString() {
+            try {
+                const { cid } = await client.add('Hello world!');
+                document.getElementById('output').innerText = `String added with CID: ${cid}`;
+            } catch (error) {
+                console.error('Error adding string:', error);
+                document.getElementById('output').innerText = 'Error adding string';
+            }
+        }
+
+        // Attach event listeners once the DOM is loaded
+        document.addEventListener("DOMContentLoaded", () => {
+            const container = document.querySelector('.container');
+
+            container.addEventListener('click', (event) => {
+                if (event.target && event.target.id === 'uploadBtn') {
+                    uploadFile(event.target);
+                } else if (event.target && event.target.id === 'addStringBtn') {
+                    addString();
+                }
+            });
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://wallpaperaccess.com/full/3648424.jpg'); /* Replace with your image URL */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Header Style */
+        header {
+            width: 100%;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7); /* Black background with transparency */
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10; /* Ensure the header is above other elements */
+        }
+
+        header a {
+            color: #007bff; /* Blue color for the Home link */
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        header a:hover {
+            color: white; /* White when hovered */
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 8px 15px rgba(0, 0, 0, 0.3); /* Enhanced shadow effect */
+            animation: fadeIn 1s ease-in-out;
+            text-align: center;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 10px 20px rgba(0, 0, 0, 0.4); /* Shadow intensifies on hover */
+            transform: translateY(-10px); /* Subtle hover effect */
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2, h3 {
+            color: #333;
+        }
+
+        .request-item {
+            padding: 10px;
+            background-color: #e7f3fe;
+            border: 1px solid #b3d7ff;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2), 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .request-item form {
+            margin-top: 10px;
+        }
+
+        button {
+           padding:10px; 
+           background-color:#007bff; 
+           color:white; 
+           border:none; 
+           border-radius:4px; 
+           cursor:pointer; 
+           transition:bg-color .3s,.2s transform,.3s box-shadow; 
+       }
+       
+       button:hover { 
+           background-color:#0056b3; 
+           transform:sale(1.05); 
+           box-shadow:.6rem .12rem rgba(black,.3); 
+       }
+       
+       button.active { 
+           transform:sale(1); 
+           box-shadow:.03rem .06rem rgba(black,.2); 
+       }
+
+       input[type=file] { 
+           margin-top:.5rem; 
+       }
+
+       .join-network { 
+           margin-top:.5rem; 
+           padding:.5rem; 
+           background-color:#fff7cc; 
+           border-radius:.25rem; 
+           border:.5rem solid #ffeeba; 
+           text-align:center; 
+       }
+   </style>
+</head>
+<body>
+    <!-- Header Section with Home Link -->
+    <header>
+        <a href="login.html">Home</a> <!-- Link to login page (assuming login.html is the login page) -->
+    </header>
+
+    <div class="container">
+        <h2>Teacher Dashboard</h2>
+        <h3>Requests for {{ username }}</h3>
+
+        {% if join_network %}
+          <div class="join-network">
+              <p>You are not connected to the admin's network.</p>
+              <button onclick="joinAdminNetwork()">Join {{admin}} Network</button>
+          </div>
+        {% endif %}
+
+        {% if requests %}
+          {% for request_id in requests %}
+              <div class="request-item" id="request-item" data-username="{{ username }}" data-request-id="{{ request_id }}">
+                  <p>Request ID: {{ request_id }}</p>
+                  <label for="pdfFile">Upload Question Paper (PDF):</label>
+                  <input type="file" id="pdfFile" name="pdfFile" accept=".pdf" required>
+                  <button id="uploadBtn">Upload</button>
+                  <!-- <button id="addStringBtn">Upload string</button> -->
+                  <div id="output"></div>
+              </div>
+          {% endfor %}
+      {% else %}
+          <p>No requests found!</p>
+      {% endif %}
+    </div>
+
+    <script>
+      function joinAdminNetwork() {
+          // Logic to join admin's network goes here
+          alert("Joining admin's network...");
+          // You can implement the actual joining logic here
+      }
+    </script>
+
+</body>
+</html>

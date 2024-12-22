@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Executor</title>
+</head>
+<body>
+    <h1>Execute Command</h1>
+    <button id="runCommand">Run Command</button>
+    <pre id="output"></pre>
+
+    <script>
+        document.getElementById('runCommand').addEventListener('click', () => {
+            const command = 'ipfs-swarm-key-gen > ~/.ipfs/swarm.key '; // Change this to whatever command you want to run
+            window.api.executeCommand(command);
+        });
+
+        window.api.onCommandResult((result) => {
+            const outputElement = document.getElementById('output');
+            if (result.success) {
+                outputElement.textContent = 'Output:\n' + result.output;
+            } else {
+                outputElement.textContent = 'Error:\n' + result.message;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  ipfs-bootstrap:
+    build: .
+    container_name: ipfs-bootstrap
+    volumes:
+      - ipfs-bootstrap:/ipfs/.ipfs
+      - shared-swarm-key:/ipfs_shared
+      - ./index.html:/ipfs/index.html
+    ports:
+      - "4001:4001"
+      - "4001:4001/udp"
+      - "5001:5001"
+      - "8080:8080"
+    networks:
+      - ipfs-net
+    command: >
+      /bin/bash -c "
+      chown -R ipfs:ipfs /ipfs_shared &&
+      chmod 755 /ipfs_shared &&
+
+      if [ ! -f /ipfs/.ipfs/config ]; then
+        ipfs init &&
+        ipfs config Routing.Type dht &&
+        cp /ipfs_shared/swarm.key /ipfs/.ipfs/swarm.key &&
+        ipfs bootstrap rm --all &&
+        ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080 &&
+        ipfs config Addresses.API /ip4/0.0.0.0/tcp/5001 &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '[\"*\"]' &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '[\"GET\", \"POST\",\"PUT\"]' &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '[\"Authorization\", \"Origin\", \"X-Requested-With\", \"Content-Type\", \"Accept\"]' &&        
+        ipfs config --json API.HTTPHeaders.Access-Control-Expose-Headers '[\"Location\"]' &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '[\"true\"]'
+      fi &&
+
+      ipfs config show | grep \"PeerID\" | cut -d '\"' -f4 > /ipfs_shared/peer-id &&
+      chmod 644 /ipfs_shared/peer-id &&
+      
+      ipfs daemon --migrate=true
+      "
+    user: root  # Temporarily run as root to set permissions
+
+  ipfs-node-template:
+    build: .
+    volumes:
+      - dynamic-nodes:/ipfs/.ipfs
+      - shared-swarm-key:/ipfs_shared
+      - ./index.html:/ipfs/index.html
+    networks:
+      - ipfs-net
+    depends_on:
+      - ipfs-bootstrap
+    command: >
+      /bin/bash -c "
+      chown -R ipfs:ipfs /ipfs_shared &&
+      chmod 755 /ipfs_shared &&
+
+      if [ ! -f /ipfs/.ipfs/config ]; then
+        ipfs init &&
+        cp /ipfs_shared/swarm.key /ipfs/.ipfs/swarm.key &&
+        ipfs config Routing.Type dht &&
+        ipfs bootstrap rm --all &&
+        sleep 20 &&  # Increased sleep time
+        BOOTSTRAP_IP=$$(getent hosts ipfs-bootstrap | awk '{ print $$1 }') &&
+        BOOTSTRAP_ID=$$(cat /ipfs_shared/peer-id) &&
+        ipfs bootstrap add /ip4/$$BOOTSTRAP_IP/tcp/4001/p2p/$$BOOTSTRAP_ID
+      fi &&
+
+      ipfs daemon --migrate=true
+      "
+    user: root  # Temporarily run as root to set permissions
+    ports:
+      - "4101:4001"
+      - "4101:4001/udp"
+      - "5101:5001"
+      - "8180:8080"
+
+  # Initial static nodes (optional)
+  ipfs-node-1:
+    build: .
+    container_name: ipfs-node-1
+    volumes:
+      - ipfs-node-1:/ipfs/.ipfs
+      - shared-swarm-key:/ipfs_shared
+      - ./index.html:/ipfs/index.html
+    ports:
+      - "4201:4001"
+      - "4201:4001/udp"
+      - "5201:5001"
+      - "8280:8080"
+    networks:
+      - ipfs-net
+    depends_on:
+      - ipfs-bootstrap
+    command: >
+      /bin/bash -c "
+      chown -R ipfs:ipfs /ipfs_shared &&
+      chmod 755 /ipfs_shared &&
+
+      if [ ! -f /ipfs/.ipfs/config ]; then
+        ipfs init &&
+        cp /ipfs_shared/swarm.key /ipfs/.ipfs/swarm.key &&
+        ipfs config Routing.Type dht &&
+        ipfs bootstrap rm --all &&
+        sleep 20 &&  # Increased sleep time
+        BOOTSTRAP_IP=$$(getent hosts ipfs-bootstrap | awk '{ print $$1 }') &&
+        BOOTSTRAP_ID=$$(cat /ipfs_shared/peer-id) &&
+        ipfs bootstrap add /ip4/$$BOOTSTRAP_IP/tcp/4001/p2p/$$BOOTSTRAP_ID
+      fi &&
+
+      ipfs daemon --migrate=true
+      "
+    user: root
+
+networks:
+  ipfs-net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
+    attachable: true
+
+volumes:
+  ipfs-bootstrap:
+  ipfs-node-1:
+  shared-swarm-key:
+  dynamic-nodes:  # New volume for dynamically created nodes
+    driver: local

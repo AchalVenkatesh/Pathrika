@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/kubo-rpc-client/dist/index.min.js"></script>
+    <title>Superintendent Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="logo.png">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            background-image: url('https://wallpaperaccess.com/full/3648424.jpg'); /* Add your background image URL here */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        /* Header Style */
+        header {
+            width: 100%;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7); /* Black background with transparency */
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10; /* Ensure the header is above other elements */
+        }
+
+        header a {
+    color: #007bff; /* Blue color for the Home link */
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+header a:hover {
+    color: white; /* Change to white when hovered */
+}
+
+        .container {
+            width: 400px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transform: translateY(-50px);
+            opacity: 0;
+            animation: slideInFromTop 1s ease-out forwards;
+        }
+
+        @keyframes slideInFromTop {
+            0% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .container:hover {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s; /* Transition added */
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); /* Shadow effect */
+            transform: scale(1.05); /* Slight zoom-in effect */
+        }
+
+        button:active {
+            background-color: #004494;
+            transform: scale(1); /* Reset scale on click */
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section with Home Link -->
+    <header>
+        <a href="login.html">Home</a> <!-- Link to login page (assuming login.html is the login page) -->
+    </header>
+
+    <div class="container">
+        <h2>Superintendent Dashboard</h2>
+        
+        <div class="form-group">
+            <label for="uniqueCode">Enter Unique Code:</label>
+            <input type="text" id="uniqueCode" name="uniqueCode" required>
+        </div>
+        <button id="fetchPaperButton">Fetch</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const client = window.KuboRpcClient.create({ host: 'localhost', port: 5001, protocol: 'http' });
+        async function get_qp() {
+    const uniqueCode = document.getElementById('uniqueCode').value;
+    if (!uniqueCode) {
+        alert("Please enter a unique code.");
+        return;
+    }
+
+    try {
+        // Make a fetch request to the backend to get the PDF
+        const response = await fetch(`/fetch_pdf/${uniqueCode}`, {
+            method: 'GET',
+        });
+
+        if (response.ok) {
+            const data = await response.json(); // Await the JSON response
+            console.log(data); // Logs the entire data object // Access 'value' if it exists in the data object
+            const fileHash = data.file_hash; // Access 'file_hash'
+            console.log(fileHash); // Logs the file hash
+            await downloadPDF(fileHash);  // Get the file data as a blob
+        } else if (response.status === 400) {
+            throw new Error("Question paper not released yet.");
+        } else {
+            throw new Error("Error fetching the question paper.");
+        }
+    } catch (error) {
+        alert(error.message);  // Show an error message if fetching fails
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('fetchPaperButton').onclick = get_qp;
+});
+
+        async function downloadPDF(cidInput) {
+            // const cidInput = document.getElementById('cidInput');
+            const cid = cidInput;
+            console.log(cid);
+            // if (!cid) {
+            //     alert('Please enter a CID');
+            //     return;
+            // }
+
+            try {
+                const stream = client.cat(cid);
+                let pdfBlob = new Blob([], { type: 'application/pdf' });
+
+                for await (const chunk of stream) {
+                    pdfBlob = new Blob([pdfBlob, chunk], { type: 'application/pdf' });
+                }
+
+                // Create a link element to download the PDF
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'downloaded_file.pdf'; // Set the desired file name
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                document.getElementById('output').innerText = 'PDF downloaded successfully!';
+            } catch (error) {
+                console.log('Error downloading PDF:', error);
+                document.getElementById('output').innerText = 'Error downloading PDF';
+            }
+        }
+
+    </script>
+    
+</body>
+</html>

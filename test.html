@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathrika - Examination Management Software</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .download-button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .download-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Welcome to Pathrika</h1>
+    <p>Your comprehensive solution for secure examination management.</p>
+    <p>Pathrika automates exam scheduling, proctoring, and evaluation processes to provide a seamless experience for educational institutions.</p>
+
+    <button class="download-button" onclick="downloadExecutable()">Download Pathrika</button>
+
+    <script>
+        function downloadExecutable() {
+            const link = document.createElement('a');
+            link.href = 'path/to/your/executable/file.exe'; // Replace with the actual path to your executable
+            link.download = 'Pathrika_Exam_Management_Software.exe'; // Name of the downloaded file
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+</body>
+</html>

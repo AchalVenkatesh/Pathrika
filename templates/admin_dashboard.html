@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="logo.png">
+    <style>
+        body {
+            display: flex;
+            justify-content: center; /* Center containers horizontally */
+            align-items: center; /* Center containers vertically */
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('https://wallpaperaccess.com/full/3648424.jpg'); /* Add your image URL here */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        /* Header with Simple Home Link */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        header a:hover {
+            color: lightgray; /* Subtle color change on hover */
+        }
+
+        .container {
+            width: 350px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency */
+            border-radius: 8px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            margin: 20px;
+            opacity: 0; /* Initially invisible */
+            animation-duration: 1s;
+            animation-fill-mode: forwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Hover effect on boxes */
+        .container:hover {
+            transform: scale(1.1); /* Zoom in slightly */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); /* Much stronger shadow on hover */
+        }
+
+        .container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-button {
+            background-color: #28a745;
+        }
+
+        .add-button:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+
+        .slide-in-right {
+           animation-name: slideFromRight; 
+       }
+       
+       @keyframes slideFromRight { 
+           from { transform : translateX(100%); opacity : .5; } 
+           to { transform : translateX(0); opacity :1; } 
+       } 
+       
+       .slide-in-left { 
+           animation-name : slideFromLeft; 
+       } 
+       
+       @keyframes slideFromLeft { 
+           from { transform : translateX(-100%); opacity : .5; } 
+           to { transform : translateX(0); opacity :1; } 
+       }
+    </style>
+</head>
+<body>
+
+    <!-- Header with Simple Home Link -->
+    <header>
+        <a href="login.html">Home</a>
+    </header>
+
+    <!-- Container for Submitting Question Papers -->
+    <div class="container slide-in-left">
+        <h2>Request Question Paper</h2>
+        <form id="adminForm" method="POST" action="/submit_paper">
+            <div class="form-group">
+                <label for="teacherId">Teacher User ID:</label>
+                <input type="text" id="teacherId" name="teacherId" required>
+            </div>
+            {% if exams %}
+            <div class="form-group">
+                <label for="examSelect">Select an Exam:</label>
+                <select id="examSelect" name="examSelect" required>
+                     <option value="" disabled   selected>Select an exam</option>
+                    {% for exam in exams %}
+                        <option value="{{ exam }}">{{ exam }}</option>
+                    {% endfor %}
+                </select> 
+            </div>
+        {% else %}
+            <p>No exams available!</p>
+        {% endif %}
+        <!-- <div class="form-group">
+            <label for="paperCode">Exam code</label>
+            <input type="text" id="paperCode" name="paperCode" required>
+        </div> -->
+        
+             <div class="form-group">
+                <label for="releaseDate">Release Date:</label>
+                <input type="datetime-local" id="releaseDate" name="releaseDate" required>
+             </div>
+             <button type="submit">Submit</button>
+         </form>
+     </div>
+
+     <!-- Container for Adding Users -->
+     <div class="container slide-in-right">
+         <h2>Add User</h2>
+         <form id="addUserForm" method="POST" action="/add_user">
+             <div class="form-group">
+                 <label for="userId">User ID:</label>
+                 <input type="text" id="userId" name="userId" required>
+             </div>
+             <div class="form-group">
+                 <label for="password">Password:</label>
+                 <input type="password" id="password" name="password" required>
+             </div>
+             <div class="form-group">
+                 <label for="role">Role:</label>
+                 <select id="role" name="role" required>
+                     <option value="admin">Admin</option>
+                     <option value="teacher">Teacher</option>
+                     <option value="superintendent">Superintendent</option>
+                 </select>
+             </div>
+             <button type="submit" class="add-button">Add User</button>
+         </form>
+     </div>
+
+     <div class="container slide-in-right">
+        <h2>Add Subject</h2>
+        <form id="addSubjectForm" method="POST" action="/add_subject">
+            <div class="form-group">
+                <label for="subjectName">Subject Name:</label>
+                <input type="text" id="subjectName" name="subjectName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="subjectCode">Subject Code:</label>
+                <input type="text" id="subjectCode" name="subjectCode" required>
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <!-- Container for Creating New Examination -->
+    <div class="container slide-in-left">
+        <h2>Create New Examination</h2>
+        <form id="createExamForm">     
+
+            <!-- Payment Section -->
+            <p>Payment Required:</p> 
+            <p><strong>Amount:</strong> ≈ <span id='amount'>0.00083218 SepoliaETH</span></p> 
+
+            <!-- Button to Initiate Payment -->
+            <button type='button' id='payButton'>Pay with MetaMask</button> 
+
+            <!-- Output Message -->
+            <div id='paymentOutput'></div> 
+        </form> 
+    </div>
+    
+     <div class="container slide-in-right">
+        <h2>Suspicious Activities</h2>
+        {% if alerts %}
+        {% for alert in alerts %}
+            <div class="request-item" id="request-item" data-subject-name="{{ alert.subjectName }}">
+                <p>Subject Name: {{ alert.exam_id }}</p>
+                <p>User who tried to access it: {{alert.user_id}}</p>
+                <p>Time : {{alert.time}}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No suspicious activity.</p>
+    {% endif %}
+     </div>
+
+     <!-- Include Web3.js library -->
+     <script src='https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js'></script> 
+
+     <!-- JavaScript to handle payment and submission -->
+     <script>
+
+         // Function to initiate payment
+         async function payForExam() {
+             if (typeof window.ethereum !== 'undefined') {
+                 const web3 = new Web3(window.ethereum);
+                 try {
+                     // Request account access
+                     await window.ethereum.request({ method:'eth_requestAccounts' });
+                     
+                     const accounts = await web3.eth.getAccounts();
+                     const account = accounts[0];
+
+                     // Amount in Wei (1 ETH = 10^18 Wei)
+                     const amount = web3.utils.toWei('0.00083218', 'ether');
+
+                     // Sending transaction
+                     const tx = await web3.eth.sendTransaction({
+                         from : account,
+                         to : '0xBdC076e4aa82dD3aBb61fbCA9c556C9201C87Edc', // Replace with your backend address
+                         value : amount
+                     });
+
+                     console.log('Payment successful:', tx);
+
+                     // Send exam details to backend
+                     const subjectName = document.getElementById('subjectName').value; 
+                     const subjectCode = document.getElementById('subjectCode').value;
+
+                     const response = await fetch('/create_exam', { // Replace with your backend endpoint
+                         method : 'POST',
+                         headers : { 'Content-Type': 'application/json' },
+                         body : JSON.stringify({ subjectName , subjectCode })
+                     });
+
+                     if (response.ok) {
+                         document.getElementById('paymentOutput').innerText = 'Exam has been set successfully!';
+                         document.getElementById('subjectName').value = '';
+                        document.getElementById('subjectCode').value = '';
+
+                     } else {
+                         document.getElementById('paymentOutput').innerText = 'Failed to set exam.';
+                     }
+                 } catch (error) {
+                     console.error('Payment error:', error);
+                     document.getElementById('paymentOutput').innerText = 'Payment failed.';
+                 }
+             } else {
+                 alert('Please install MetaMask!');
+             }
+         }
+
+         // Attach event listener to payment button
+         document.getElementById('payButton').onclick = payForExam;
+
+     </script>
+
+</body>
+</html>
+
